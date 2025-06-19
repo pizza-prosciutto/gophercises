@@ -1,0 +1,11 @@
+{
+    "image": "mcr.microsoft.com/devcontainers/go:dev-1.23-bookworm",
+    "name": "${localWorkspaceFolderBasename}",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "golang.Go"
+            ]
+        }
+    }
+}
