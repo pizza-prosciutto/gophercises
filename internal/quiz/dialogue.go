@@ -2,23 +2,50 @@ package quiz
 
 import (
 	"fmt"
-	"io"
-	"log"
+	"os"
+	"strings"
+	"time"
 )
 
-func StartQuiz(problems []Problem, stdin io.Reader) Result {
-	result := Result{0, 0}
+func showDialogue(problems []Problem, result *Result, done chan any) {
 	for idx, problem := range problems {
-		result.TotalQuestions = result.TotalQuestions + 1
-		fmt.Printf("Problem #%d: %s = ", idx, problem.Question)
+		fmt.Printf("Problem #%d: %s = ", idx+1, problem.Question)
 		var answer string
-		if _, err := fmt.Fscanln(stdin, &answer); err != nil {
-			log.Fatalf("could not read input: %v", err)
+		if _, err := fmt.Fscanln(os.Stdin, &answer); err != nil {
+			fmt.Printf("Could not read input: %v", err)
 			continue
 		}
-		if answer == problem.Answer {
-			result.CorrectAnswers = result.CorrectAnswers + 1
+		answer = strings.TrimSpace(answer)
+		if strings.EqualFold(answer, problem.Answer) {
+			(*result).CorrectAnswers++
 		}
 	}
-	return result
+	close(done)
+}
+
+func StartQuiz(timeout time.Duration, csvPath string) (Result, error) {
+
+	problems, err := readProblems(csvPath)
+	if err != nil {
+		return Result{}, fmt.Errorf("failed to read problems: %v", err)
+	}
+
+	result := Result{TotalQuestions: len(problems)}
+
+	timer := time.NewTimer(timeout)
+
+	done := make(chan any)
+	go showDialogue(problems, &result, done)
+
+	for {
+		select {
+		case <-timer.C:
+			fmt.Println("\nTime is up!")
+			return result, nil
+		case _, ok := <-done:
+			if !ok {
+				return result, nil
+			}
+		}
+	}
 }

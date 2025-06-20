@@ -1,10 +1,8 @@
-package quiz_test
+package quiz
 
 import (
 	"os"
 	"testing"
-
-	"github.com/pizza-prosciutto/gophercises/internal/quiz"
 )
 
 func TestReadProblems(t *testing.T) {
@@ -23,7 +21,7 @@ func TestReadProblems(t *testing.T) {
 		t.Fatalf("failed to close test file: %v", err)
 	}
 
-	problems, err := quiz.ReadProblems(tempFile.Name())
+	problems, err := readProblems(tempFile.Name())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

@@ -5,11 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"os"
 )
 
-func ReadProblems(csvPath string) ([]Problem, error) {
+func readProblems(csvPath string) ([]Problem, error) {
 	if _, err := os.Stat(csvPath); err != nil {
 		return nil, errors.New("provided csv file does not exist")
 	}
@@ -25,7 +24,7 @@ func ReadProblems(csvPath string) ([]Problem, error) {
 			return problems, nil
 		}
 		if err != nil {
-			log.Fatalf("could not read record: %v", err)
+			fmt.Printf("Could not read record: %v\n", err)
 		} else {
 			problems = append(problems, Problem{Question: csvRecord[0], Answer: csvRecord[1]})
 		}
