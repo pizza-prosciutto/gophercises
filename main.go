@@ -1,27 +1,44 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"os"
-	"time"
+	"net/http"
 
-	"github.com/pizza-prosciutto/gophercises/internal/quiz"
+	"github.com/pizza-prosciutto/urlshort"
 )
 
 func main() {
+	mux := defaultMux()
 
-	var timeout time.Duration
-	var csvPath string
-
-	flag.DurationVar(&timeout, "timeout", 10*time.Second, "quiz timeout, e.g. 10s, 1m")
-	flag.StringVar(&csvPath, "csv", "problems.csv", "path to quiz questions in csv format")
-	flag.Parse()
-
-	result, err := quiz.StartQuiz(timeout, csvPath)
-	if err != nil {
-		fmt.Printf("Oops: %v\n", err)
-		os.Exit(1)
+	// Build the MapHandler using the mux as the fallback
+	pathsToUrls := map[string]string{
+		"/urlshort-godoc": "https://godoc.org/github.com/gophercises/urlshort",
+		"/yaml-godoc":     "https://godoc.org/gopkg.in/yaml.v2",
 	}
-	fmt.Printf("You scored %d out of %d.\n", result.CorrectAnswers, result.TotalQuestions)
+	mapHandler := urlshort.MapHandler(pathsToUrls, mux)
+
+	// Build the YAMLHandler using the mapHandler as the
+	// fallback
+	yaml := `
+- path: /urlshort
+  url: https://github.com/gophercises/urlshort
+- path: /urlshort-final
+  url: https://github.com/gophercises/urlshort/tree/solution
+`
+	yamlHandler, err := urlshort.YAMLHandler([]byte(yaml), mapHandler)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Starting the server on :8080")
+	http.ListenAndServe(":8080", yamlHandler)
+}
+
+func defaultMux() *http.ServeMux {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", hello)
+	return mux
+}
+
+func hello(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "Hello, world!")
 }
